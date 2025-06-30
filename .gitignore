@@ -1,4 +1,5 @@
 apps/parser/file/rasp.docx
+__pycache__/
 ~$rasp.docx
 venv
 .idea
