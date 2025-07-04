@@ -27,7 +27,7 @@ except ImportError:
     raise BaseException('Не указан токен в env.py')
 
 # All handlers should be attached to the Router (or Dispatcher)
-
+#//TODO ГДЕ ФЛАГ ЛЕКЦИЙ?
 dp = Dispatcher()
 
 
@@ -83,8 +83,8 @@ async def group_number_handler(message: Message, state: FSMContext) -> None:
         int(message.text)
     except ValueError:
         await message.answer("Номер группы - должно быть число")
-    finally:
-        await state.clear()
+    # finally:
+    #     await state.clear()
     async with SessionLocal() as db:
         group_number = message.text
         stmt = select(Discipline).where(Discipline.groups.any(group_number))
@@ -94,13 +94,25 @@ async def group_number_handler(message: Message, state: FSMContext) -> None:
             await message.answer('Неверно указана группа или занятий не найдено')
         disciplines_list = [await to_dict(d) for d in disciplines]
 
-        texts = []
+        texts = {}
+        answer = ''
         for d in disciplines_list:
-            text = "\n".join(f"{k}: {v}" for k, v in d.items())
-            texts.append(text)
+            texts.setdefault(d['weekday'], []).append({key: value for key, value in d.items() if key != 'weekday'})
 
-        message_text = "\n\n".join(texts)
-        await message.answer(message_text)
+        for weekday in texts:
+            answer += weekday + '\n\n'
+            for discipline in texts[weekday]:
+                try:
+                    discipline['special_data'] = ', '.join(discipline['special_data'])
+                except KeyError:
+                    pass
+                if discipline['lecture'] is True:
+                    answer += 'ЛЕКЦИЯ\n'
+                del discipline['lecture']
+                answer += str(' '.join([value for value in discipline.values()])) + '\n\n'
+
+
+        await message.answer(answer)
 
 
 # @dp.message(AdminFilter('admin'))

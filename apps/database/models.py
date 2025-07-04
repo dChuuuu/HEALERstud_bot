@@ -11,6 +11,6 @@ class Discipline(Base):
     groups = Column(ARRAY(String), nullable=False)
     time = Column(String, nullable=False)
     weekday = Column(String, nullable=False)
-    lecture = Column(Boolean, nullable=False, default='False'),
+    lecture = Column(Boolean, nullable=False, default='False')
     classroom = Column(String, nullable=True)
     special_data = Column(ARRAY(String), nullable=True)
