@@ -3,3 +3,4 @@ __pycache__/
 ~$rasp.docx
 venv
 .idea
+env.py/
