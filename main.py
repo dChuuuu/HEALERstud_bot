@@ -64,7 +64,7 @@ async def to_dict(obj):
 
 
 async def sender(user_id, state):
-    current_weekday = 0
+    current_weekday = datetime.today().weekday()
 
     weekdays_dict = {'ПОНЕДЕЛЬНИК': 0,
                      'ВТОРНИК': 1,
@@ -103,7 +103,7 @@ async def sender(user_id, state):
             #print(diff.total_seconds())
             #print(discipline)
             if diff.total_seconds() < 0 and index == len(todays_disciplines) - 1:
-                print('first')
+                print(f'ждём следующего дня, {diff.total_seconds()}')
                 #print((current_datetime + timedelta(days=1)).replace(hour=0, minute=0, second=0, microsecond=0))
 
                 target_datetime = (current_datetime + timedelta(days=1)).replace(hour=0, minute=0, second=0, microsecond=0)
@@ -111,11 +111,11 @@ async def sender(user_id, state):
                 diff = target_datetime - current_datetime
                 await asyncio.sleep(diff.total_seconds())
             elif diff.total_seconds() < 0:
-                print('fourth')
+                print(f'пропускаем сегодняшний прошедший предмет, {diff.total_seconds()}, {discipline}')
                 #print(current_datetime)
                 pass
             elif diff.total_seconds() <= 3600:
-                print('second')
+                print(f'обрабатываем предмет, до которого осталось менее часа, {diff.total_seconds()}, {discipline}')
                 await bot.send_message(user_id, f'Остался час до {discipline}')
                 if index == 0:
                     await asyncio.sleep(diff.total_seconds())
@@ -131,7 +131,7 @@ async def sender(user_id, state):
                         break
 
             else:
-                print('third')
+                print(f'ждём следующий предмет, {diff.total_seconds()}, {discipline}')
                 await asyncio.sleep(diff.total_seconds() - 3600)
                 await bot.send_message(user_id, f'Остался час до {discipline}')
                 await asyncio.sleep(3600)
@@ -145,9 +145,6 @@ async def sender(user_id, state):
             diff = target_datetime - current_datetime
             await asyncio.sleep(diff.total_seconds())
             current_weekday = 0
-
-
-
 
 
 async def start_logic(state: FSMContext):
@@ -255,17 +252,17 @@ async def warn_text(message: Message):
 #     print(disciplines)
 
 
-# @dp.message(AdminFilter('admin'))
-# async def admin(message: Message) -> None:
-#     disciplines = await parse()
-#     async with SessionLocal() as db:
-#         for weekday in disciplines:
-#             for discipline in disciplines[weekday]:
-#                 discipline['weekday'] = weekday
-#                 data = Discipline(**discipline)
-#                 db.add(data)
-#                 await db.commit()
-#     return disciplines
+@dp.message(AdminFilter('admin'))
+async def admin(message: Message) -> None:
+    disciplines = await parse()
+    async with SessionLocal() as db:
+        for weekday in disciplines:
+            for discipline in disciplines[weekday]:
+                discipline['weekday'] = weekday
+                data = Discipline(**discipline)
+                db.add(data)
+                await db.commit()
+    return disciplines
 
 
 @dp.message()
