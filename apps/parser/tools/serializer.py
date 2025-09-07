@@ -29,6 +29,7 @@ class Subject:
                                'groups': groups,
                                'time': time,
                                'lecture': lecture}
+
             classroom = _object[3]
 
             if classroom != '':
@@ -38,7 +39,12 @@ class Subject:
             if re.search(pattern, name):
                 special_data = re.findall(pattern, name)
                 discipline_data['special_data'] = special_data
-                name = name[0:name.index(':')]
+                try:
+                    name = name[0:name.index(':')]
+                except ValueError:
+                    print(name)
+                    raise
+
                 discipline_data['name'] = name
 
 

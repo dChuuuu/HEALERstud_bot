@@ -23,6 +23,7 @@ class MessageText:
                 if discipline['lecture'] is True:
                     answer += 'ЛЕКЦИЯ\n'
                 del discipline['lecture']
+                #print(answer)
                 answer += str(' '.join([value for value in discipline.values()])) + '\n\n'
             emoji_index += 1
         answer += '\nГотово! Сообщи, если нужно ещё что-нибудь'
@@ -39,6 +40,7 @@ class DateToDateTime:
                          'ПЯТНИЦА': 4}
         data = await state.get_data()
         disciplines = data.get('disciplines')
+
         disciplines_answer = []
         # cur_weekday = 1
         # cur_date = datetime(year=2025, month=3, day=3)
@@ -56,15 +58,20 @@ class DateToDateTime:
             dates.append(start_of_week + timedelta(i))
 
         for discipline in disciplines:
+
             if discipline.get('special_data'):
+
                 if any(map(lambda day: datetime.strptime(f"{day}.{datetime.today().year}",
-                                                         "%d.%m.%Y") in dates, discipline['special_data'])) is True:
+                                                         "%d.%m.%Y").date() in dates, discipline['special_data'])) is True:
+
                     discipline['current_week'] = True
                 else:
                     discipline['current_week'] = False
 
             else:
                 discipline['current_week'] = True
+
+
 
         if command == 'weekly' or command == 'next_week':
             for discipline in disciplines:
