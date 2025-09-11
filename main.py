@@ -13,7 +13,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import StatesGroup, State
 from aiogram.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton
 from alembic.command import current
-from sqlalchemy import select, func, String
+from sqlalchemy import select, func, String, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from pydantic import BaseModel
@@ -28,7 +28,7 @@ from forms import Form
 from tools.pretty import MessageText, DateToDateTime
 from tools.sender import sender
 from aiogram.fsm.storage.redis import RedisStorage
-import redis
+import redis.asyncio as redis
 
 import logging
 
@@ -191,8 +191,11 @@ async def callback_handler(callback: CallbackQuery, state: FSMContext):
 async def admin(message: Message) -> None:
     disciplines = await parse()
     async with SessionLocal() as db:
-        db.flush()
+
         await r.flushdb()
+        stmt = "TRUNCATE TABLE disciplines RESTART IDENTITY;"
+        await db.execute(text(stmt))
+
         for weekday in disciplines:
             for discipline in disciplines[weekday]:
                 discipline['weekday'] = weekday
