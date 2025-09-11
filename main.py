@@ -28,10 +28,12 @@ from forms import Form
 from tools.pretty import MessageText, DateToDateTime
 from tools.sender import sender
 from aiogram.fsm.storage.redis import RedisStorage
+import redis
 
 import logging
 
-
+#//TODO ЛЕКЦИИ НА ТЕКУЩУЮ И СЛЕДУЮЩУЮ НЕДЕЛЮ НЕ ОТОБРАЖАЮТСЯ
+#//TODO ИСПРАВИТЬ ОШИБКУ В ОБРАБОТЧИКЕ НАПОМИНАНИЙ
 #//TODO ПРОВЕРИТЬ ВОЗВРАЩЕНИЕ НАЗВАНИЯ СЛОВА ЛЕКЦИЯ ДЛЯ WAITERS.PY
 #//TODO АСИНХРОННЫЙ ОБРАБОТЧИК НАПОМИНАНИЙ
 #//TODO РАСПИСАНИЕ ИТОГОВЫХ
@@ -67,8 +69,11 @@ except ImportError:
     raise BaseException('Не указан токен в env.py')
 
 bot = Bot(token=TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
+
 storage = RedisStorage.from_url("redis://localhost:6379/0")
 dp = Dispatcher(storage=storage)
+
+r = redis.Redis.from_url("redis://localhost:6379/0")
 
 class AdminFilter(Filter):
     def __init__(self, text: str) -> None:
@@ -186,13 +191,18 @@ async def callback_handler(callback: CallbackQuery, state: FSMContext):
 async def admin(message: Message) -> None:
     disciplines = await parse()
     async with SessionLocal() as db:
+        db.flush()
+        await r.flushdb()
         for weekday in disciplines:
             for discipline in disciplines[weekday]:
                 discipline['weekday'] = weekday
                 data = Discipline(**discipline)
                 db.add(data)
                 await db.commit()
+
     return disciplines
+
+
 
 @dp.message()
 async def warn_text(message: Message):
