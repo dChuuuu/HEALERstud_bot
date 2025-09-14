@@ -15,7 +15,6 @@ from tools.to_dict import to_dict
 async def sender(user_id, state, bot, logger):
     current_weekday = datetime.today().weekday()
 
-
     weekdays_dict = {'ПОНЕДЕЛЬНИК': 0,
                      'ВТОРНИК': 1,
                      'СРЕДА': 2,
@@ -47,11 +46,13 @@ async def sender(user_id, state, bot, logger):
         for index, discipline in enumerate(todays_disciplines):
             current_datetime = datetime.now()
 
+
             diff = discipline['lesson_start_time'] - current_datetime
             if index == len(todays_disciplines) - 1:
                 if diff.total_seconds() <= 3600:
 
                     try:
+                        d = disciplines[index + 1]
                         await LessThanHour().wait(username, diff, user_id, discipline, current_datetime, index, bot, logger)
                     except IndexError:
                         break
@@ -72,12 +73,14 @@ async def sender(user_id, state, bot, logger):
                     await bot.send_message(user_id, f'Занятие {discipline} началось!')
                 else:
                     try:
+                        d = disciplines[index + 1]
                         await LessThanHour().wait(username, diff, user_id, discipline, current_datetime, index, bot, logger)
                     except IndexError:
                         break
 
             else:
                 await MoreThanHour().wait(username, diff, discipline, user_id, bot, logger)
+
 
         if current_weekday <= 4:
             current_weekday += 1

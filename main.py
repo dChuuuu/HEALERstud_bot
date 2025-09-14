@@ -32,16 +32,14 @@ import redis.asyncio as redis
 
 import logging
 
-#//TODO ЛЕКЦИИ НА ТЕКУЩУЮ И СЛЕДУЮЩУЮ НЕДЕЛЮ НЕ ОТОБРАЖАЮТСЯ
-#//TODO ИСПРАВИТЬ ОШИБКУ В ОБРАБОТЧИКЕ НАПОМИНАНИЙ
-#//TODO ПРОВЕРИТЬ ВОЗВРАЩЕНИЕ НАЗВАНИЯ СЛОВА ЛЕКЦИЯ ДЛЯ WAITERS.PY
+
+#//TODO СОХРАНЕНИЕ СОСТОЯНИЯ НАПОМИНАНИЙ ПОСЛЕ ПЕРЕЗАГРУЗКИ БОТА
 #//TODO АСИНХРОННЫЙ ОБРАБОТЧИК НАПОМИНАНИЙ
+#//TODO РАСПИСАНИЕ ДЛЯ 4-6 КУРСОВ
 #//TODO РАСПИСАНИЕ ИТОГОВЫХ
 #//TODO АДМИН-ЧАСТЬ
 #//TODO AI АССИСТЕНТ
-#//TODO СОСТОЯНИЕ В ОБРАБОТЧИКЕ(ВКЛ/ВЫКЛ УВЕДОМЛЕНИЯ)
-#//TODO ОТКЛЮЧЕНИЕ НАПОМИНАНИЙ + ТЕКУЩИЙ СТАТУС НАПОМИНАНИЙ(ВКЛЮЧЕНЫ ИЛИ НЕТ)
-#//TODO РАСПИСАНИЕ ДЛЯ 4-6 КУРСОВ
+
 
 logger = logging.getLogger('main')
 logger.setLevel(logging.INFO)
@@ -133,6 +131,7 @@ async def group_number_handler(message: Message, state: FSMContext):
 @dp.callback_query(StateFilter(Form.disciplines))
 async def callback_handler(callback: CallbackQuery, state: FSMContext):
 
+
     if callback.data == 'week_schedule':
 
         disciplines = await DateToDateTime().pretty(state, command='weekly')
@@ -165,6 +164,24 @@ async def callback_handler(callback: CallbackQuery, state: FSMContext):
         await start_logic(state)
 
     elif callback.data == 'notifications':
+        data = await state.get_data()
+        user_id = data.get('id')
+        tasks = asyncio.all_tasks()
+        outdated_task = None
+
+        for task in tasks:
+            if task.get_name() == 'Sender':
+                outdated_task = task
+                break
+
+        if outdated_task:
+            outdated_task.cancel()
+
+            await bot.send_message(chat_id=user_id, text='Уведомления выключены!', reply_markup=keyboard)
+            tasks = asyncio.all_tasks()
+            print(tasks)
+            return None
+
         disciplines = await DateToDateTime().pretty(state, command='weekly')
 
         for discipline in disciplines:
@@ -174,21 +191,12 @@ async def callback_handler(callback: CallbackQuery, state: FSMContext):
             discipline['lesson_start_time'] = datetime.combine(datetime.today(), lesson_time)
 
         user_id = callback.from_user.id
-        # task = asyncio.create_task(sender(user_id, state, bot, logger))
-        # if not task.done():
-        #     task.cancel()
-        #     try:
-        #         await task
-        #     except asyncio.CancelledError:
-        #         print("Задача успешно отменена")
-        await sender(user_id, state, bot, logger)
+        await bot.send_message(chat_id=user_id, text='Уведомления включены!', reply_markup=keyboard)
+        await asyncio.create_task(sender(user_id, state, bot, logger), name='Sender')
 
-
-        #answer = MessageText().pretty(disciplines_list=disciplines, ignorable_keys=['current_week', 'weekday', 'lesson_start_time'])
-        # await callback.message.answer(answer, reply_markup=keyboard)
 
 @dp.message(AdminFilter('admin'))
-async def admin(message: Message) -> None:
+async def admin() -> None:
     disciplines = await parse()
     async with SessionLocal() as db:
 

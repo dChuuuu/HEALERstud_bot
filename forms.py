@@ -5,3 +5,4 @@ class Form(StatesGroup):
     disciplines = State()
     id = State()
     name = State()
+
