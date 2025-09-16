@@ -67,10 +67,11 @@ async def sender(user_id, state, bot, logger):
 
             elif diff.total_seconds() <= 3600:
                 logger.info(f'{username} - обрабатываем предмет, до которого осталось менее часа, {diff.total_seconds()}, {discipline}')
-                await bot.send_message(user_id, f'Остался час до {discipline}')
+                text = 'ЛЕКЦИЯ' if discipline['lecture'] else '' + discipline['name'] + discipline['time'] + discipline['classroom'] if discipline['classroom'] else ''
+                await bot.send_message(user_id, f'Остался час до {text}')
                 if index == 0:
                     await asyncio.sleep(diff.total_seconds())
-                    await bot.send_message(user_id, f'Занятие {discipline} началось!')
+                    await bot.send_message(user_id, f'Занятие {text} началось!')
                 else:
                     try:
                         d = disciplines[index + 1]
