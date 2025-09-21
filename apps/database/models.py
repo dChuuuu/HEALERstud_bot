@@ -15,6 +15,7 @@ class Discipline(Base):
     classroom = Column(String, nullable=True)
     special_data = Column(ARRAY(String), nullable=True)
 
+
 class Users(Base):
 
     __tablename__ = 'users'
@@ -22,3 +23,12 @@ class Users(Base):
     id = Column(Integer, nullable=False, primary_key=True, autoincrement=True)
     chat_id = Column(Integer)
     state = Column(JSONB)
+
+
+class Notifications(Base):
+
+    __tablename__ = 'notifications'
+
+    user_id = Column(Integer, nullable=False, primary_key=True, unique=True)
+    enabled = Column(Boolean, nullable=False, default=False)
+

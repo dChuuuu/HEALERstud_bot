@@ -17,16 +17,21 @@ class MoreThanHour:
     async def wait(self, username, diff, discipline, user_id, bot, logger):
         logger.info(f'{username} - ждём следующий предмет, более часа {diff.total_seconds()}, {discipline}')
         await asyncio.sleep(diff.total_seconds() - 3600)
-        await bot.send_message(user_id, f'Осталось менее часа до {"ЛЕКЦИЯ" if discipline["lecture"] is True else None} {discipline["name"]} {discipline["time"]} {discipline.get("classroom", None)}')
+        text = 'ЛЕКЦИЯ' if discipline['lecture'] else '' + discipline['name'] + discipline['time'] + discipline.get('classroom', '')
+        await bot.send_message(user_id, f'Осталось менее часа до {text}')
         await asyncio.sleep(3600)
-        await bot.send_message(user_id, f'Занятие {"ЛЕКЦИЯ" if discipline["lecture"] is True else None} {discipline["name"]} {discipline["time"]} {discipline.get("classroom", None)} началось!')
+        await bot.send_message(user_id, f'Занятие {text} началось!')
 
 
 class LessThanHour:
     async def wait(self, username, diff, user_id, discipline, current_datetime, index, bot, logger):
         logger.info(f'{username} - обрабатываем предмет, до которого осталось менее часа, {diff.total_seconds()}, {discipline}')
-        await bot.send_message(user_id, f'Осталось менее часа до {"ЛЕКЦИЯ" if discipline["lecture"] is True else None} {discipline["name"]} {discipline["time"]} {discipline.get("classroom", None)}')
+        text = 'ЛЕКЦИЯ' if discipline['lecture'] else '' + discipline['name'] + discipline['time'] + discipline.get('classroom', '')
+        await bot.send_message(user_id, f'Осталось менее часа до {text}')
         await asyncio.sleep(diff.total_seconds())
-        await bot.send_message(user_id, f'Занятие {"ЛЕКЦИЯ" if discipline["lecture"] is True else None} {discipline["name"]} {discipline["time"]} {discipline.get("classroom", None)} началось!')
-        diff = disciplines[index + 1]['lesson_start_time'] - current_datetime - timedelta(hours=1)
+        await bot.send_message(user_id, f'Занятие {text} началось!')
+        try:
+            diff = disciplines[index + 1]['lesson_start_time'] - current_datetime - timedelta(hours=1)
+        except KeyError:
+            pass
         await asyncio.sleep(diff.total_seconds())

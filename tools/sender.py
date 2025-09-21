@@ -14,7 +14,7 @@ from tools.to_dict import to_dict
 
 async def sender(user_id, state, bot, logger):
     current_weekday = datetime.today().weekday()
-
+    #current_weekday = 0
     weekdays_dict = {'ПОНЕДЕЛЬНИК': 0,
                      'ВТОРНИК': 1,
                      'СРЕДА': 2,
@@ -39,44 +39,51 @@ async def sender(user_id, state, bot, logger):
 
             lesson_time = datetime.strptime(time_str, '%H.%M').time()
             discipline['lesson_start_time'] = datetime.combine(datetime.today(), lesson_time)
+            #discipline['lesson_start_time'] = datetime.combine(datetime(year=2025, month=9, day=21).date(), lesson_time)
 
 
         todays_disciplines = [discipline for discipline in disciplines if weekdays_dict[discipline['weekday']] == current_weekday]
 
         for index, discipline in enumerate(todays_disciplines):
             current_datetime = datetime.now()
+            #current_datetime = datetime(year=2025, month=9, day=21, hour=19)
 
 
             diff = discipline['lesson_start_time'] - current_datetime
+            logger.info(f'Разница во времени составляет {diff.total_seconds()}')
             if index == len(todays_disciplines) - 1:
-                if diff.total_seconds() <= 3600:
+                if 0 <= diff.total_seconds() <= 3600:
 
                     try:
                         d = disciplines[index + 1]
                         await LessThanHour().wait(username, diff, user_id, discipline, current_datetime, index, bot, logger)
                     except IndexError:
                         break
+                elif diff.total_seconds() < 0:
+                    await UntilTomorrow().wait(current_datetime, username, diff, logger)
                 else:
                     await MoreThanHour().wait(username, diff, discipline, user_id, bot, logger)
 
-                await UntilTomorrow().wait(current_datetime, username, diff, logger)
+
+
 
             elif diff.total_seconds() < 0:
                 logger.info(f'{username} - пропускаем сегодняшний прошедший предмет, {diff.total_seconds()}, {discipline}')
                 pass
 
-            elif diff.total_seconds() <= 3600:
+            elif 0 <= diff.total_seconds() <= 3600:
                 logger.info(f'{username} - обрабатываем предмет, до которого осталось менее часа, {diff.total_seconds()}, {discipline}')
-                text = 'ЛЕКЦИЯ' if discipline['lecture'] else '' + discipline['name'] + discipline['time'] + discipline['classroom'] if discipline['classroom'] else ''
+                text = 'ЛЕКЦИЯ' if discipline['lecture'] else '' + discipline['name'] + discipline['time'] + discipline[
+                    'classroom'] if discipline['classroom'] else ''
                 await bot.send_message(user_id, f'Остался час до {text}')
                 if index == 0:
                     await asyncio.sleep(diff.total_seconds())
                     await bot.send_message(user_id, f'Занятие {text} началось!')
                 else:
                     try:
-                        d = disciplines[index + 1]
+
                         await LessThanHour().wait(username, diff, user_id, discipline, current_datetime, index, bot, logger)
-                    except IndexError:
+                    except KeyError:
                         break
 
             else:

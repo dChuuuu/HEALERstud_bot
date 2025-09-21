@@ -1,3 +1,5 @@
+from contextlib import asynccontextmanager
+
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
 from sqlalchemy.orm import DeclarativeBase
 from env import DATABASE_NAME, USERNAME, PASSWORD, HOST
@@ -9,6 +11,8 @@ SessionLocal = async_sessionmaker(bind=engine)
 class Base(DeclarativeBase):
     pass
 
+
+@asynccontextmanager
 async def get_db():
     async with SessionLocal() as session:
         yield session

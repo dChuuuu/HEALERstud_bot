@@ -19,8 +19,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
-from apps.database.models import Discipline
-from apps.database.database import SessionLocal
+from apps.database.models import Discipline, Notifications
+from apps.database.database import SessionLocal, get_db
+
 from datetime import datetime, timedelta
 from apps.parser.parser import parse, disciplines
 from apps.reminder.main import get_disciplines, convert_to_datetime
@@ -32,7 +33,7 @@ import redis.asyncio as redis
 
 import logging
 
-#//TODO ПОЧИНИТЬ NONE
+#//TODO ПОЧЕМУ БОТ ОТПРАВЛЯЕТ СООБЩЕНИЕ ОБ УЖЕ ПРОШЕДШЕМ ПОСЛЕДНЕМ ПРЕДМЕТЕ
 #//TODO СОХРАНЕНИЕ СОСТОЯНИЯ НАПОМИНАНИЙ ПОСЛЕ ПЕРЕЗАГРУЗКИ БОТА
 #//TODO АСИНХРОННЫЙ ОБРАБОТЧИК НАПОМИНАНИЙ
 #//TODO РАСПИСАНИЕ ДЛЯ 4-6 КУРСОВ
@@ -129,7 +130,7 @@ async def group_number_handler(message: Message, state: FSMContext):
 
 
 @dp.callback_query(StateFilter(Form.disciplines))
-async def callback_handler(callback: CallbackQuery, state: FSMContext):
+async def callback_handler(callback: CallbackQuery, state: FSMContext, db: AsyncSession = get_db()):
 
 
     if callback.data == 'week_schedule':
@@ -165,7 +166,7 @@ async def callback_handler(callback: CallbackQuery, state: FSMContext):
 
     elif callback.data == 'notifications':
         data = await state.get_data()
-        user_id = data.get('id')
+        user_id = data['id']
         tasks = asyncio.all_tasks()
         outdated_task = None
 
@@ -176,11 +177,29 @@ async def callback_handler(callback: CallbackQuery, state: FSMContext):
 
         if outdated_task:
             outdated_task.cancel()
+            async with get_db() as db:
+                stmt = select(Notifications).where(Notifications.user_id == user_id)
+                result = await db.execute(stmt)
+                notification_status = result.scalar_one_or_none()
+                setattr(notification_status, 'enabled', False)
+                await db.commit()
+                await bot.send_message(chat_id=user_id, text='Уведомления выключены!', reply_markup=keyboard)
 
-            await bot.send_message(chat_id=user_id, text='Уведомления выключены!', reply_markup=keyboard)
-            tasks = asyncio.all_tasks()
-            print(tasks)
-            return None
+
+                return None
+
+        else:
+            async with get_db() as db:
+                stmt = select(Notifications).where(Notifications.user_id == user_id)
+                result = await db.execute(stmt)
+                notification_status = result.scalar_one_or_none()
+                if notification_status:
+                    setattr(notification_status, 'enabled', True)
+                    await db.commit()
+                else:
+                    notification = Notifications(user_id=user_id)
+                    db.add(notification)
+                    await db.commit()
 
         disciplines = await DateToDateTime().pretty(state, command='weekly')
 
@@ -218,9 +237,6 @@ async def admin() -> None:
 @dp.message()
 async def warn_text(message: Message):
     await message.answer("Пожалуйста, используйте кнопки для взаимодействия.")
-
-
-
 
 
 @dp.message()
