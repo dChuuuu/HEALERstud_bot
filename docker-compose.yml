@@ -5,7 +5,7 @@ services:
   web:
     build: .
     ports:
-      - "55555:55555"
+      - "55556:55556"
     environment:
       - DATABASE_URL=postgresql+psycopg2://postgres:8565@localhost/healerstud_db
     depends_on:
