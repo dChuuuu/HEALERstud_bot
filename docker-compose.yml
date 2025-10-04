@@ -1,0 +1,48 @@
+version: '3.8'
+
+services:
+
+  web:
+    build: .
+    ports:
+      - "55555:55555"
+    environment:
+      - DATABASE_URL=postgresql+psycopg2://faq:856565@localhost/faq_db
+    depends_on:
+      - db
+    volumes:
+      - .:/app
+    networks:
+      - healerstud_network
+
+  migrate:
+    build: .
+    command: alembic upgrade head
+    depends_on:
+      - db
+    environment:
+      - DATABASE_URL=postgresql+psycopg2://faq:856565@localhost/faq_db
+    volumes:
+      - .:/app
+    networks:
+      - fastapi_network
+
+
+  db:
+    image: postgres:16
+    environment:
+      - POSTGRES_DB=faq_db
+      - POSTGRES_USER=faq
+      - POSTGRES_PASSWORD=856565
+    ports:
+      - "5488:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - fastapi_network
+
+volumes:
+  postgres_data:
+
+networks:
+  fastapi_network:
