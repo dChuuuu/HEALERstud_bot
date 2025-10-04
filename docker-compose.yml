@@ -35,7 +35,7 @@ services:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=8565
     ports:
-      - "55555:55555"
+      - "55555:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
