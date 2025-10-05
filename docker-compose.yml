@@ -7,7 +7,7 @@ services:
     ports:
       - "55556:55556"
     environment:
-      - DATABASE_URL=postgresql+psycopg2://postgres:8565@localhost/healerstud_db
+      - DATABASE_URL=postgresql+psycopg2://postgres:8565@db/healerstud_db
     depends_on:
       - db
     volumes:
@@ -21,7 +21,7 @@ services:
     depends_on:
       - db
     environment:
-      - DATABASE_URL=postgresql+psycopg2://postgres:8565@localhost/healerstud_db
+      - DATABASE_URL=postgresql+psycopg2://postgres:8565@db/healerstud_db
     volumes:
       - .:/app
     networks:
