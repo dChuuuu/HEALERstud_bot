@@ -215,7 +215,7 @@ async def callback_handler(callback: CallbackQuery, state: FSMContext, db: Async
 
 
 @dp.message(AdminFilter('admin'))
-async def admin() -> None:
+async def admin(message: Message) -> None:
     disciplines = await parse()
     async with SessionLocal() as db:
 

@@ -64,17 +64,13 @@ async def sender(user_id, state, bot, logger):
                 else:
                     await MoreThanHour().wait(username, diff, discipline, user_id, bot, logger)
 
-
-
-
             elif diff.total_seconds() < 0:
                 logger.info(f'{username} - пропускаем сегодняшний прошедший предмет, {diff.total_seconds()}, {discipline}')
                 pass
 
             elif 0 <= diff.total_seconds() <= 3600:
                 logger.info(f'{username} - обрабатываем предмет, до которого осталось менее часа, {diff.total_seconds()}, {discipline}')
-                text = 'ЛЕКЦИЯ' if discipline['lecture'] else '' + discipline['name'] + discipline['time'] + discipline[
-                    'classroom'] if discipline['classroom'] else ''
+                text = 'ЛЕКЦИЯ' if discipline['lecture'] else '' + discipline['name'] + discipline['time'] + discipline.get('classroom', '')
                 await bot.send_message(user_id, f'Остался час до {text}')
                 if index == 0:
                     await asyncio.sleep(diff.total_seconds())
@@ -90,9 +86,10 @@ async def sender(user_id, state, bot, logger):
                 await MoreThanHour().wait(username, diff, discipline, user_id, bot, logger)
 
 
-        if current_weekday <= 4:
+        if current_weekday < 6:
             current_weekday += 1
-        elif current_weekday == 5 or current_weekday == 6:
+
+        if current_weekday == 5 or current_weekday == 6:
             logger.info('Ждём следующую неделю')
             current_datetime = datetime.now()
             target_datetime = (current_datetime + timedelta(days=7 - current_weekday)).replace(hour=0, minute=0, second=0)
