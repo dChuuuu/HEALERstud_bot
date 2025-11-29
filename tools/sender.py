@@ -14,7 +14,7 @@ from tools.to_dict import to_dict
 
 async def sender(user_id, state, bot, logger):
     current_weekday = datetime.today().weekday()
-    #current_weekday = 0
+    #current_weekday = 1
     weekdays_dict = {'ПОНЕДЕЛЬНИК': 0,
                      'ВТОРНИК': 1,
                      'СРЕДА': 2,
@@ -39,7 +39,7 @@ async def sender(user_id, state, bot, logger):
 
             lesson_time = datetime.strptime(time_str, '%H.%M').time()
             discipline['lesson_start_time'] = datetime.combine(datetime.today(), lesson_time)
-            #discipline['lesson_start_time'] = datetime.combine(datetime(year=2025, month=9, day=21).date(), lesson_time)
+            #discipline['lesson_start_time'] = datetime.combine(datetime(year=2025, month=11, day=25).date(), lesson_time)
 
 
         todays_disciplines = [discipline for discipline in disciplines if weekdays_dict[discipline['weekday']] == current_weekday]
@@ -71,10 +71,10 @@ async def sender(user_id, state, bot, logger):
             elif 0 <= diff.total_seconds() <= 3600:
                 logger.info(f'{username} - обрабатываем предмет, до которого осталось менее часа, {diff.total_seconds()}, {discipline}')
                 text = 'ЛЕКЦИЯ' if discipline['lecture'] else '' + discipline['name'] + discipline['time'] + discipline.get('classroom', '')
-                await bot.send_message(user_id, f'Остался час до {text}')
+                await bot.send_message(user_id, f'Остался час до {text} data: {discipline["lecture"]}, {discipline["time"]}. Current dt: {current_datetime}')
                 if index == 0:
                     await asyncio.sleep(diff.total_seconds())
-                    await bot.send_message(user_id, f'Занятие {text} началось!')
+                    await bot.send_message(user_id, f'Занятие {text} началось! data: {discipline["lecture"]}, {discipline["time"]}. Current dt: {current_datetime}')
                 else:
                     try:
 
@@ -90,7 +90,7 @@ async def sender(user_id, state, bot, logger):
             current_weekday += 1
 
         if current_weekday == 5 or current_weekday == 6:
-            logger.info('Ждём следующую неделю')
+            logger.info('Ждём следующую неделю ')
             current_datetime = datetime.now()
             target_datetime = (current_datetime + timedelta(days=7 - current_weekday)).replace(hour=0, minute=0, second=0)
             diff = target_datetime - current_datetime
